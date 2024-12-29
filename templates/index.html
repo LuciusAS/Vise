@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Calendar Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+        .chat-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .input-box {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        .send-button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>1% Jarvis</h1>
+    <div class="chat-box" id="chat-box" aria-live="polite"></div>
+    <input type="text" id="user_input" class="input-box" placeholder="Type your message..." aria-label="Type your message">
+    <button onclick="sendMessage()" class="send-button">Send</button>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function sendMessage() {
+            var userInput = $('#user_input').val();
+            if (!userInput.trim()) return;  // Prevent empty messages
+
+            $.ajax({
+                url: '/process',
+                type: 'POST',
+                data: { user_input: userInput },
+                success: function(response) {
+                    appendMessage('You', userInput);
+                    appendMessage('AI', response);
+                    $('#user_input').val('');
+                },
+                error: function(xhr, status, error) {
+                    appendMessage('Error', 'Failed to get response: ' + error);
+                }
+            });
+        }
+
+        function appendMessage(sender, message) {
+            $('#chat-box').append('<div><b>' + sender + ':</b> ' + message + '</div>');
+            var chatBox = document.getElementById("chat-box");
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Allow sending message with Enter key
+        $('#user_input').keypress(function(e) {
+            if(e.which == 13) {
+                sendMessage();
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>
