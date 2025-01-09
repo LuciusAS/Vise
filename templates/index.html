@@ -1,84 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Calendar Assistant</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            max-width: 600px;
-            margin: auto;
-        }
-        .chat-box {
-            border: 1px solid #ccc;
-            padding: 10px;
-            height: 300px;
-            overflow-y: auto;
-            margin-bottom: 10px;
-        }
-        .input-box {
-            width: calc(100% - 22px);
-            padding: 10px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
-        }
-        .send-button {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Jarvis Chat</title>
+  <!-- Link to external stylesheet -->
+  <link rel="stylesheet" href="../static/css/styles.css" />
 </head>
 <body>
-    <h1>1% Jarvis</h1>
-    <div class="chat-box" id="chat-box" aria-live="polite"></div>
-    <input type="text" id="user_input" class="input-box" placeholder="Type your message..." aria-label="Type your message">
-    <button onclick="sendMessage()" class="send-button">Send</button>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        function sendMessage() {
-            var userInput = $('#user_input').val();
-            if (!userInput.trim()) return;  // Prevent empty messages
+  <!-- Header -->
+  <header>
+    <h1>Jarvis Chat</h1>
+  </header>
 
-            $.ajax({
-                url: '/process',
-                type: 'POST',
-                data: { user_input: userInput },
-                success: function(response) {
-                    appendMessage('You', userInput);
-                    appendMessage('AI', response);
-                    $('#user_input').val('');
-                },
-                error: function(xhr, status, error) {
-                    appendMessage('Error', 'Failed to get response: ' + error);
-                }
-            });
-        }
+  <!-- Chat Messages Container -->
+  <div class="chat-container" id="chatContainer">
+    <!-- Messages injected here via JavaScript -->
+  </div>
 
-        function appendMessage(sender, message) {
-            $('#chat-box').append('<div><b>' + sender + ':</b> ' + message + '</div>');
-            var chatBox = document.getElementById("chat-box");
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+  <!-- Input Bar -->
+  <div class="chat-input">
+    <form id="userForm" method="POST" action="/process">
+      <input
+        type="text"
+        name="user_input"
+        id="userInput"
+        placeholder="Type your message..."
+        autocomplete="off"
+        required
+      />
+      <button type="submit">Send</button>
+    </form>
+  </div>
 
-        // Allow sending message with Enter key
-        $('#user_input').keypress(function(e) {
-            if(e.which == 13) {
-                sendMessage();
-                return false;
-            }
-        });
-    </script>
+  <!-- JavaScript for handling chat interactions -->
+  <script>
+    const userForm = document.getElementById('userForm');
+    const userInputField = document.getElementById('userInput');
+    const chatContainer = document.getElementById('chatContainer');
+
+    userForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const userText = userInputField.value.trim();
+      if (userText === '') return;
+
+      // 1. Add the user's message to the chat
+      addMessageBubble(userText, 'user-message');
+      userInputField.value = '';
+
+      // 2. Send the user's message to the Flask backend
+      fetch('/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ 'user_input': userText })
+      })
+      .then(response => response.text())
+      .then(data => {
+        // 3. The response is plain text (HTML-friendly).
+        //    Add it to the chat as a bot-message.
+        addMessageBubble(data, 'bot-message');
+      })
+      .catch(err => {
+        console.error(err);
+        addMessageBubble('Error: ' + err, 'bot-message');
+      });
+    });
+
+    function addMessageBubble(text, cssClass) {
+      const newBubble = document.createElement('div');
+      newBubble.className = `chat-message ${cssClass}`;
+      newBubble.innerHTML = text;
+      chatContainer.appendChild(newBubble);
+      // Scroll to bottom each time a new message arrives
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  </script>
+
 </body>
 </html>
